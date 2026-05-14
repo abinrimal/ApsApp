@@ -18,32 +18,59 @@ public class XMLParser {
     
     public List<List<String>> parseAccounts(String filePath) {
         List<List<String>> accounts = new ArrayList<>();
+
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document doc = builder.parse(new File(filePath));
 
-            NodeList accountList = doc.getElementsByTagName("account");
-            for (int i = 0; i < accountList.getLength(); i++) {
-                Element accountElement = (Element) accountList.item(i);
+            NodeList nodeList = doc.getDocumentElement().getElementsByTagName("account");
+
+            for (int i = 0; i < nodeList.getLength(); i++) {
+
+                Node node = nodeList.item(i);
+
+                // skip nested <account> nodes
+                if (node.getParentNode() != doc.getDocumentElement()) {
+                    continue;
+                }
+
+                Element accountElement = (Element) node;
+
                 List<String> accountData = new ArrayList<>();
-                accountData.add(accountElement.getElementsByTagName("account").item(0).getTextContent());
-                accountData.add(accountElement.getElementsByTagName("sector").item(0).getTextContent());
-                accountData.add(accountElement.getElementsByTagName("year_established").item(0).getTextContent());                accountData.add(accountElement.getElementsByTagName("year_established").item(0).getTextContent());
-                accountData.add(accountElement.getElementsByTagName("revenue").item(0).getTextContent());                accountData.add(accountElement.getElementsByTagName("revenue").item(0).getTextContent());
-                accountData.add(accountElement.getElementsByTagName("employees").item(0).getTextContent());
-                accountData.add(accountElement.getElementsByTagName("office_location").item(0).getTextContent());                accountData.add(accountElement.getElementsByTagName("office_location").item(0).getTextContent());
-                accountData.add(accountElement.getElementsByTagName("subsidiary_of").item(0).getTextContent());
+
+                accountData.add(safe(accountElement, "account"));
+                accountData.add(safe(accountElement, "sector"));
+                accountData.add(safe(accountElement, "year_established"));
+                accountData.add(safe(accountElement, "revenue"));
+                accountData.add(safe(accountElement, "employees"));
+                accountData.add(safe(accountElement, "office_location"));
+                accountData.add(safe(accountElement, "subsidiary_of"));
+
                 accounts.add(accountData);
             }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         return accounts;
+    }
+    
+    //safely extract a text value from an XML tag inside an <account> element.
+    private String safe(Element e, String tag) {
+        NodeList nl = e.getElementsByTagName(tag); //if tag = "sector", it finds <sector>technolgy</sector>
+
+        if (nl == null || nl.getLength() == 0 || nl.item(0) == null) {
+            return null;
+        }
+
+        String value = nl.item(0).getTextContent();
+        return (value != null && !value.trim().isEmpty()) ? value.trim() : null;
     }
 
     public List<List<String>> parseSalesTeams(String filePath) {
-        List<List<String>> sales = new ArrayList<>();
+        List<List<String>> sales_teams = new ArrayList<>();
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
@@ -56,11 +83,11 @@ public class XMLParser {
                 saleTeamData.add(saleTeamElement.getElementsByTagName("sales_agent").item(0).getTextContent());
                 saleTeamData.add(saleTeamElement.getElementsByTagName("manager").item(0).getTextContent());
                 saleTeamData.add(saleTeamElement.getElementsByTagName("regional_office").item(0).getTextContent());
-                sales.add(saleTeamData);
+                sales_teams.add(saleTeamData);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return sales;
+        return sales_teams;
     }
 }
